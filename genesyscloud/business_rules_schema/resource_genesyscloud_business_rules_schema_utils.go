@@ -3,7 +3,7 @@ package business_rules_schema
 import (
 	"encoding/json"
 	"fmt"
-
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -93,7 +93,9 @@ func businessRulesSchemaFtIsEnabled() (bool, *http.Response) {
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+clientConfig.AccessToken)
+	req.Header.Set("Authorization", "Bearer " + clientConfig.AccessToken)
+
+	log.Printf("AUTH TOKEN: %s", clientConfig.AccessToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -104,6 +106,14 @@ func businessRulesSchemaFtIsEnabled() (bool, *http.Response) {
 
 	if resp.StatusCode == http.StatusOK {
 		return true, resp
+	}
+
+	// Read response body for better error logging
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading response body: %v", err)
+	} else {
+		log.Printf("Business rules schema feature not enabled. Status: %s, Response: %s", resp.Status, string(bodyBytes))
 	}
 
 	return false, resp
